@@ -947,3 +947,34 @@ h2 {
   background: var(--print);
   transform: rotate(2deg);
 }
+
+/* ---------- Administration : tableau des demandes de contact ---------- */
+.admin-sheet {
+  padding: 0.5rem 1rem;
+  background: var(--fiche);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 16px 30px -16px var(--shade);
+}
+
+.admin-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ink);
+  --bs-table-border-color: var(--rule);
+  font-size: 1rem;
+  vertical-align: top;
+}
+
+.admin-table th {
+  font-family: var(--font-stamp);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.admin-message {
+  max-width: 50ch;
+  color: var(--ink-soft);
+  white-space: pre-line;
+}

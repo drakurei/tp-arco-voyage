@@ -14,8 +14,20 @@ export const store = configureStore({
 // (clés "user" et "token", relues par authSlice au démarrage)
 // (les reducers doivent rester sans effet de bord, donc on le fait ici)
 let previousAuth = store.getState().auth
+let previousContacts = store.getState().contact.messages
 store.subscribe(() => {
-  const { auth } = store.getState()
+  const { auth, contact } = store.getState()
+
+  // demandes de contact : clé "contacts"
+  if (contact.messages !== previousContacts) {
+    previousContacts = contact.messages
+    try {
+      localStorage.setItem("contacts", JSON.stringify(contact.messages))
+    } catch {
+      // localStorage indisponible
+    }
+  }
+
   if (auth.token === previousAuth.token && auth.user === previousAuth.user) return
   previousAuth = auth
 

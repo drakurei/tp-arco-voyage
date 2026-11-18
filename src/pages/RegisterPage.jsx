@@ -2,10 +2,10 @@ import { Button, Card, Col, Alert, Form } from "react-bootstrap"
 import { useForm, useWatch } from "react-hook-form"
 import * as yup from "yup"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Link } from "react-router-dom"
+import { Link, Navigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { clearAuthError, registerUser } from "../features/auth/authSlice"
+import { clearAuthError, registerUser, selectUser } from "../features/auth/authSlice"
 import { AVATAR_STYLES, avatarUrl } from "../utils/avatar"
 
 // Mêmes champs que l'API du cours : POST /api/auth/register.php
@@ -13,7 +13,8 @@ const registerSchema = yup.object({
     username: yup
         .string()
         .trim()
-        .required("Le login est obligatoire"),
+        .required("Le login est obligatoire")
+        .min(4, "Le login doit avoir 4 caractères minimum"),
     email: yup
         .string()
         .trim()
@@ -22,6 +23,10 @@ const registerSchema = yup.object({
     password: yup
         .string()
         .required("Le mot de passe est obligatoire")
+        .matches(/[a-z]/, "Le mot de passe doit avoir au moins une minuscule")
+        .matches(/[A-Z]/, "Le mot de passe doit avoir au moins une majuscule")
+        .matches(/[0-9]/, "Le mot de passe doit avoir au moins un chiffre")
+        .matches(/[^a-zA-Z0-9]/, "Le mot de passe doit avoir au moins un caractère spécial")
         .min(8, "Le mot de passe doit avoir 8 caractères minimum"),
     firstName: yup
         .string()
@@ -39,6 +44,7 @@ function RegisterPage () {
     const dispatch = useDispatch()
     // erreur d'inscription gardée dans le slice auth
     const error = useSelector((state) => state.auth.error)
+    const user = useSelector(selectUser)
     const [createdUser, setCreatedUser] = useState(null)
 
     // Avatar DiceBear : un style + un numéro pour en tirer un autre
@@ -50,6 +56,7 @@ function RegisterPage () {
         handleSubmit,
         reset,
         control,
+        setError,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: yupResolver(registerSchema),
@@ -81,9 +88,22 @@ function RegisterPage () {
             setCreatedUser(user)
             reset()
             setAvatarVariant(0)
-        } catch {
-            // le message d'erreur est déjà dans le state (auth.error)
+        } catch (message) {
+            // unwrap() renvoie le message passé à rejectWithValue
+            // login ou email déjà pris : on affiche l'erreur sous le champ login
+            const text = String(message).toLowerCase()
+            if (text.includes("username") || text.includes("email")) {
+                setError("username", {
+                    type: "server",
+                    message: "Ce login ou cet email est déjà utilisé",
+                })
+            }
         }
+    }
+
+    // Déjà connecté : pas besoin de créer un compte
+    if (user) {
+        return <Navigate to="/profile" replace />
     }
 
     return (

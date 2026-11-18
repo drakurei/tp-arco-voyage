@@ -49,13 +49,19 @@ export const loginUser = createAsyncThunk(
         try {
 
             // dummyjson : la route de connexion est /auth/login
-            return await apiRequest('/auth/login', {
+            const data = await apiRequest('/auth/login', {
                 // methode : post
                 method: 'POST',
 
                 // conversion des données au format JSON
                 body: JSON.stringify(credentials)
             })
+
+            // dummyjson ne renvoie pas le rôle à la connexion :
+            // on le récupère avec /auth/me (token nécessaire)
+            const me = await apiRequest('/auth/me', { token: data.accessToken })
+
+            return { ...data, role: me.role }
 
         } catch (error) {
 
@@ -127,10 +133,11 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 // réponse de dummyjson : { accessToken, id, username, email, ... }
-                const { accessToken, id, username, email, firstName, lastName, image } = action.payload
+                const { accessToken, id, username, email, firstName, lastName, image, role } = action.payload
                 state.status = 'succeeded'
                 state.token = accessToken
-                state.user = { id, username, email, firstName, lastName, image }
+                // role : "admin", "moderator" ou "user"
+                state.user = { id, username, email, firstName, lastName, image, role }
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.status = 'failed'
@@ -157,5 +164,6 @@ export const { logout, clearAuthError } = authSlice.actions
 // Sélecteurs : pour lire le state dans les composants avec useSelector
 export const selectUser = (state) => state.auth.user
 export const selectToken = (state) => state.auth.token
+export const selectIsAdmin = (state) => state.auth.user?.role === 'admin'
 
 export default authSlice.reducer

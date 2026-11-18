@@ -1,11 +1,12 @@
 import { startTransition, useEffect, useRef } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logout, selectUser } from "../features/auth/authSlice";
+import { logout, selectIsAdmin, selectUser } from "../features/auth/authSlice";
 import { useTheme } from "../context/ThemeContext";
 
 function Navbar() {
   const user = useSelector(selectUser);
+  const isAdmin = useSelector(selectIsAdmin);
   const dispatch = useDispatch();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -79,6 +80,12 @@ function Navbar() {
 
         {user ? (
           <>
+            {/* lien réservé au rôle admin */}
+            {isAdmin && (
+              <NavLink to="/admin" className="account-link account-secondary">
+                Administration
+              </NavLink>
+            )}
             <NavLink to="/favorites" className="account-link account-secondary">
               Favoris
             </NavLink>

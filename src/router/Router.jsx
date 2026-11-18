@@ -11,6 +11,8 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/ProtectedRoute";
+import AdminRoute from "../components/AdminRoute";
+import AdminPage from "../pages/AdminPage";
 import FavoritesPage from "../pages/FavoritesPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
@@ -32,6 +34,10 @@ function Router() {
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
+          </Route>
+          {/* Routes réservées au rôle "admin" */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Route>

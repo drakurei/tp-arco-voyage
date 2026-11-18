@@ -4,6 +4,7 @@ import { Alert, Button, Col, Form, Row } from "react-bootstrap"
 import { useForm } from "react-hook-form"
 import * as yup from "yup"
 import { clearConfirmation, selectLastSender, sendMessage } from "../features/contact/contactSlice"
+import { selectUser } from "../features/auth/authSlice"
 
 // Schéma de validation du formulaire de contact
 const contactSchema = yup.object({
@@ -29,6 +30,8 @@ function ContactPage() {
   const dispatch = useDispatch()
   // nom de la dernière personne qui a écrit (slice contact)
   const sentName = useSelector(selectLastSender)
+  // si l'utilisateur est connecté, la demande est liée à son compte
+  const user = useSelector(selectUser)
 
   const {
     register,
@@ -37,10 +40,17 @@ function ContactPage() {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(contactSchema),
+    // connecté : nom et email déjà remplis
+    defaultValues: {
+      name: user ? `${user.firstName} ${user.lastName}` : "",
+      email: user?.email ?? "",
+      subject: "",
+      message: "",
+    },
   })
 
   const onSubmit = (data) => {
-    dispatch(sendMessage(data))
+    dispatch(sendMessage({ ...data, userId: user?.id ?? null, username: user?.username ?? null }))
     reset()
   }
 
