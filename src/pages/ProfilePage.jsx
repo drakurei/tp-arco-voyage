@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Alert, Card, Col, Row, Spinner } from "react-bootstrap"
 import { useDispatch, useSelector } from "react-redux"
 import { apiRequest } from "../api/apiClient"
+import { avatarUrl } from "../utils/avatar"
 import { logout, selectToken } from "../features/auth/authSlice"
 
 // Une ligne "libellé : valeur", affichée seulement si la valeur existe
@@ -50,7 +51,7 @@ function ProfilePage () {
             <Card className="auth-card">
                 <Card.Body>
                     <div className="profile-head mb-4">
-                        <img src={profile.image} alt={`Avatar de ${profile.username}`} className="profile-avatar" />
+                        <img src={profile.image || avatarUrl(profile.username)} alt={`Avatar de ${profile.username}`} className="profile-avatar" />
                         <div>
                             <p className="eyebrow">Mon profil</p>
                             <h1 className="mb-0">{profile.firstName} {profile.lastName}</h1>

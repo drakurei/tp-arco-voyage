@@ -908,3 +908,42 @@ h2 {
     transition: none;
   }
 }
+
+/* ---------- Inscription : choix de l'avatar DiceBear ---------- */
+.avatar-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+/* l'avatar est un petit tirage photo, comme sur le profil */
+.avatar-preview {
+  width: 104px;
+  height: 104px;
+  flex-shrink: 0;
+  padding: 6px;
+  background: var(--print);
+  box-shadow: 0 8px 18px -8px var(--shade);
+  transform: rotate(-3deg);
+}
+
+.avatar-styles .form-check-input:checked {
+  background-color: var(--stamp);
+  border-color: var(--stamp);
+}
+
+.register-success {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.register-success-avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  padding: 4px;
+  background: var(--print);
+  transform: rotate(2deg);
+}

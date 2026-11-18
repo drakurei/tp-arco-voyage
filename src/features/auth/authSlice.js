@@ -70,6 +70,32 @@ export const loginUser = createAsyncThunk(
     }
 
 )
+export const registerUser = createAsyncThunk(
+    // Nom unique de l'action redux
+    'auth/registerUser',
+
+    // userData : { username, email, password, firstName, lastName, gender, avatar }
+    async ({ avatar, ...userData }, { rejectWithValue }) => {
+        try {
+
+            // dummyjson : la création d'un compte se fait sur /users/add
+            // (il simule l'ajout sans l'enregistrer) et l'avatar s'appelle "image"
+            return await apiRequest('/users/add', {
+                // methode : post
+                method: 'POST',
+
+                // conversion des données au format JSON
+                body: JSON.stringify({ ...userData, image: avatar })
+            })
+
+        } catch (error) {
+
+            return rejectWithValue(error.message)
+
+        }
+    }
+)
+
 // createAsyncThunk génère 3 actions :
 // auth/loginUser/pending   : la requete part
 // auth/loginUser/fulfilled : la requete a réussi (action.payload = la réponse de l'API)
@@ -109,6 +135,19 @@ const authSlice = createSlice({
             .addCase(loginUser.rejected, (state, action) => {
                 state.status = 'failed'
                 state.error = action.payload ?? 'Une erreur est survenue'
+            })
+
+            // Inscription : on ne connecte pas l'utilisateur (dummyjson n'enregistre pas le compte)
+            .addCase(registerUser.pending, (state) => {
+                state.status = 'loading'
+                state.error = null
+            })
+            .addCase(registerUser.fulfilled, (state) => {
+                state.status = 'succeeded'
+            })
+            .addCase(registerUser.rejected, (state, action) => {
+                state.status = 'failed'
+                state.error = action.payload ?? "L'inscription a échoué, réessayez plus tard"
             })
     },
 })
