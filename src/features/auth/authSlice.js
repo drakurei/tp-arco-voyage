@@ -41,38 +41,39 @@ export const loginUser = createAsyncThunk(
     'auth/loginUser',
 
     // fonction asynchrone exécutée lors du dispatch
+    // rejectWithValue est une fonction fournie par createAsyncThunk
+    // permet de récupérer une erreur personnalisée : dans notre cas l'erreur potentielle renvoyée par l'API
+
     // credentials : { username, password } envoyés par dispatch(loginUser(credentials))
-    // rejectWithValue : permet de renvoyer notre propre message d'erreur
-    async ({ username, password }, { rejectWithValue }) => {
+    async (credentials, { rejectWithValue }) => {
         try {
-            const data = await apiRequest('/auth/login', {
+
+            // dummyjson : la route de connexion est /auth/login
+            return await apiRequest('/auth/login', {
+                // methode : post
                 method: 'POST',
-                body: { username, password, expiresInMins: 60 },
+
+                // conversion des données au format JSON
+                body: JSON.stringify(credentials)
             })
 
-            // Ce qui est retourné devient action.payload dans loginUser.fulfilled
-            return {
-                token: data.accessToken,
-                user: {
-                    id: data.id,
-                    username: data.username,
-                    email: data.email,
-                    firstName: data.firstName,
-                    lastName: data.lastName,
-                    image: data.image,
-                },
-            }
         } catch (error) {
-            // 400 : identifiants refusés par dummyjson
-            // Ce qui est retourné devient action.payload dans loginUser.rejected
-            return rejectWithValue(error.status === 400 ? 'Login ou mot de passe incorrect' : error.message)
+
+            // 400 : dummyjson refuse les identifiants (message en anglais) : on le traduit
+            if (error.status === 400) {
+                return rejectWithValue('Login ou mot de passe incorrect')
+            }
+
+            return rejectWithValue(error.message)
+
         }
     }
+
 )
 // createAsyncThunk génère 3 actions :
 // auth/loginUser/pending   : la requete part
-// auth/loginUser/fulfilled : la requete a réussi
-// auth/loginUser/rejected  : la requete a échoué
+// auth/loginUser/fulfilled : la requete a réussi (action.payload = la réponse de l'API)
+// auth/loginUser/rejected  : la requete a échoué (action.payload = le message d'erreur)
 
 const authSlice = createSlice({
     name: 'auth',
@@ -99,9 +100,11 @@ const authSlice = createSlice({
                 state.error = null
             })
             .addCase(loginUser.fulfilled, (state, action) => {
+                // réponse de dummyjson : { accessToken, id, username, email, ... }
+                const { accessToken, id, username, email, firstName, lastName, image } = action.payload
                 state.status = 'succeeded'
-                state.user = action.payload.user
-                state.token = action.payload.token
+                state.token = accessToken
+                state.user = { id, username, email, firstName, lastName, image }
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.status = 'failed'

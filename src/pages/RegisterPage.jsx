@@ -65,7 +65,7 @@ function RegisterPage () {
         try {
             const user = await apiRequest("/users/add", {
                 method: "POST",
-                body: {
+                body: JSON.stringify({
                     username: data.username,
                     password: data.password,
                     email: data.email,
@@ -73,7 +73,7 @@ function RegisterPage () {
                     lastName: data.lastname,
                     gender: data.gender,
                     image: data.avatar,
-                },
+                }),
             })
             setCreatedUser(user)
             reset()
