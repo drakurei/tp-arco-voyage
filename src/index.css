@@ -978,3 +978,218 @@ h2 {
   color: var(--ink-soft);
   white-space: pre-line;
 }
+
+/* ---------- Bulle avatar dans le menu ---------- */
+.avatar-bubble {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--print);
+  border: 2px solid var(--on-cover);
+  box-shadow: 0 2px 0 var(--shade);
+  transition: transform 0.25s var(--ease);
+}
+
+.avatar-bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-bubble:hover {
+  transform: scale(1.06);
+}
+
+/* sur la page profil : anneau rouge, comme l'onglet actif */
+.avatar-bubble.active {
+  box-shadow: 0 0 0 3px var(--stamp-red);
+}
+
+/* ---------- Profil : page de passeport ---------- */
+.passport {
+  position: relative;
+  padding: 1.25rem 1.5rem 1rem;
+  background-color: var(--fiche);
+  /* fond guilloché discret, comme sur un vrai passeport */
+  background-image:
+    repeating-radial-gradient(circle at 85% 20%, transparent 0 10px, var(--rule) 10px 11px);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 16px 30px -16px var(--shade);
+}
+
+.passport-title {
+  margin: 0 0 1rem;
+  font-family: var(--font-stamp);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp);
+}
+
+.passport-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.passport-photo {
+  flex-shrink: 0;
+  width: 140px;
+  align-self: flex-start;
+  margin: 0;
+  padding: 8px 8px 22px;
+  background: var(--print);
+  box-shadow: 0 8px 18px -8px var(--shade);
+  transform: rotate(-2deg);
+}
+
+.passport-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.passport-data {
+  flex: 1;
+  min-width: 220px;
+}
+
+.passport-name {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  margin-bottom: 0.15rem;
+}
+
+/* tampon du rôle */
+.role-stamp {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  padding: 0.2rem 0.7rem;
+  border: 2.5px solid currentColor;
+  border-radius: 4px;
+  font-family: var(--font-stamp);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  transform: rotate(-4deg);
+}
+
+.role-admin {
+  color: var(--stamp-red);
+}
+
+.passport-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+}
+
+.passport-fields dt {
+  font-family: var(--font-stamp);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.passport-fields dd {
+  margin: 0;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+/* bande de lecture automatique en bas du passeport */
+.passport-mrz {
+  margin: 1.5rem -0.5rem 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule);
+  font-family: "OCR B", "Courier New", monospace;
+  font-size: clamp(0.62rem, 1.45vw, 0.92rem);
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.avatar-edit {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--fiche);
+  box-shadow: 0 12px 24px -16px var(--shade);
+}
+
+/* favoris : petits tirages */
+.profile-favorites {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-favorite {
+  display: block;
+  padding: 5px 5px 6px;
+  background: var(--print);
+  color: var(--print-ink);
+  text-decoration: none;
+  box-shadow: 0 8px 16px -10px var(--shade);
+  transform: rotate(-1.5deg);
+  transition: transform 0.3s var(--ease);
+}
+
+.profile-favorites li:nth-child(even) .profile-favorite {
+  transform: rotate(1.2deg);
+}
+
+.profile-favorite:hover,
+.profile-favorite:focus-visible {
+  transform: rotate(0deg) translateY(-2px);
+  color: var(--print-ink);
+}
+
+.profile-favorite img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.profile-favorite span {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--font-hand);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.profile-messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-messages li {
+  display: flex;
+  flex-direction: column;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed var(--rule);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-bubble,
+  .profile-favorite {
+    transition: none;
+  }
+}

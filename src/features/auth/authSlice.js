@@ -118,6 +118,10 @@ const authSlice = createSlice({
             state.status = 'idle'
             state.error = null
         },
+        // Nouvel avatar choisi sur le profil (sauvegardé avec l'utilisateur dans le localStorage)
+        updateAvatar: (state, action) => {
+            if (state.user) state.user.image = action.payload
+        },
         // Efface le message d'erreur de connexion (quand on quitte la page)
         clearAuthError: (state) => {
             state.status = 'idle'
@@ -159,7 +163,7 @@ const authSlice = createSlice({
     },
 })
 
-export const { logout, clearAuthError } = authSlice.actions
+export const { logout, clearAuthError, updateAvatar } = authSlice.actions
 
 // Sélecteurs : pour lire le state dans les composants avec useSelector
 export const selectUser = (state) => state.auth.user

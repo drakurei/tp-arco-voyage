@@ -6,7 +6,8 @@ import { Link, Navigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { clearAuthError, registerUser, selectUser } from "../features/auth/authSlice"
-import { AVATAR_STYLES, avatarUrl } from "../utils/avatar"
+import { useAvatarChoice } from "../utils/avatar"
+import AvatarPicker from "../components/AvatarPicker"
 
 // Mêmes champs que l'API du cours : POST /api/auth/register.php
 const registerSchema = yup.object({
@@ -47,9 +48,6 @@ function RegisterPage () {
     const user = useSelector(selectUser)
     const [createdUser, setCreatedUser] = useState(null)
 
-    // Avatar DiceBear : un style + un numéro pour en tirer un autre
-    const [avatarStyle, setAvatarStyle] = useState(AVATAR_STYLES[0].id)
-    const [avatarVariant, setAvatarVariant] = useState(0)
 
     const {
         register,
@@ -72,8 +70,8 @@ function RegisterPage () {
 
     // L'avatar suit le login tapé : chaque voyageur a le sien
     const username = useWatch({ control, name: "username" }) ?? ""
-    const seed = `${username.trim() || "voyageur"}${avatarVariant ? `-${avatarVariant}` : ""}`
-    const avatar = avatarUrl(seed, avatarStyle)
+    const avatarChoice = useAvatarChoice(username)
+    const avatar = avatarChoice.url
 
     // En quittant la page, on efface l'erreur pour ne pas la revoir ailleurs
     useEffect(() => {
@@ -87,7 +85,7 @@ function RegisterPage () {
             const user = await dispatch(registerUser({ ...data, avatar })).unwrap()
             setCreatedUser(user)
             reset()
-            setAvatarVariant(0)
+            avatarChoice.reset()
         } catch (message) {
             // unwrap() renvoie le message passé à rejectWithValue
             // login ou email déjà pris : on affiche l'erreur sous le champ login
@@ -127,33 +125,8 @@ function RegisterPage () {
 
                     <Form noValidate onSubmit={handleSubmit(onSubmit)}>
                         {/* Avatar DiceBear, généré à partir du login */}
-                        <div className="avatar-picker mb-4">
-                            <img src={avatar} alt="Aperçu de votre avatar" className="avatar-preview" width="104" height="104" />
-                            <div>
-                                <p className="form-label mb-2">Votre avatar</p>
-                                <div className="avatar-styles" role="radiogroup" aria-label="Style d'avatar">
-                                    {AVATAR_STYLES.map((style) => (
-                                        <Form.Check
-                                            key={style.id}
-                                            type="radio"
-                                            inline
-                                            id={`avatar-${style.id}`}
-                                            name="avatarStyle"
-                                            label={style.label}
-                                            checked={avatarStyle === style.id}
-                                            onChange={() => setAvatarStyle(style.id)}
-                                        />
-                                    ))}
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="px-0"
-                                    onClick={() => setAvatarVariant((n) => n + 1)}
-                                >
-                                    Tirer un autre avatar
-                                </Button>
-                            </div>
+                        <div className="mb-4">
+                            <AvatarPicker choice={avatarChoice} idPrefix="register-avatar" />
                         </div>
 
                         <Form.Group className="mb-3" controlId="username">
