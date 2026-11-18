@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit"
-import authReducer, { AUTH_STORAGE_KEY } from "../features/auth/authSlice"
+import authReducer from "../features/auth/authSlice"
 import contactReducer from "../features/contact/contactSlice"
 
 // Le store : un seul store, autant de slices que nécessaire
@@ -11,6 +11,7 @@ export const store = configureStore({
 })
 
 // À chaque changement du state, on sauvegarde la session dans le localStorage
+// (clés "user" et "token", relues par authSlice au démarrage)
 // (les reducers doivent rester sans effet de bord, donc on le fait ici)
 let previousAuth = store.getState().auth
 store.subscribe(() => {
@@ -20,9 +21,11 @@ store.subscribe(() => {
 
   try {
     if (auth.token) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token: auth.token, user: auth.user }))
+      localStorage.setItem("user", JSON.stringify(auth.user))
+      localStorage.setItem("token", auth.token)
     } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY)
+      localStorage.removeItem("user")
+      localStorage.removeItem("token")
     }
   } catch {
     // localStorage indisponible : on garde seulement l'état en mémoire

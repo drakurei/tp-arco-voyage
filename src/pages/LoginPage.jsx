@@ -5,7 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import { Link, useNavigate } from "react-router-dom"
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { clearAuthError, login } from "../features/auth/authSlice"
+import { clearAuthError, loginUser } from "../features/auth/authSlice"
 
 const loginSchema = yup.object({
     username: yup
@@ -35,10 +35,10 @@ function LoginPage () {
         resolver: yupResolver(loginSchema),
     })
 
-    // login est un thunk : unwrap() renvoie le résultat ou lève l'erreur
+    // loginUser est un thunk : unwrap() renvoie le résultat ou lève l'erreur
     const onSubmit = async (data) => {
         try {
-            await dispatch(login({ username: data.username, password: data.password })).unwrap()
+            await dispatch(loginUser({ username: data.username, password: data.password })).unwrap()
             navigate("/profile")
         } catch {
             // le message d'erreur est déjà dans le state (auth.error)

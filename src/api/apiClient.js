@@ -10,9 +10,9 @@ export class ApiError extends Error {
   }
 }
 
-// apiClient("/auth/login", { method: "POST", body: {...} })
-// apiClient("/auth/me", { token })
-export async function apiClient(path, { method = "GET", body, token } = {}) {
+// apiRequest("/auth/login", { method: "POST", body: {...} })
+// apiRequest("/auth/me", { token })
+export async function apiRequest(path, { method = "GET", body, token } = {}) {
   const headers = {}
   if (body) headers["Content-Type"] = "application/json"
   if (token) headers.Authorization = `Bearer ${token}`

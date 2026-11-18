@@ -4,7 +4,7 @@ import * as yup from "yup"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { Link } from "react-router-dom"
 import { useState } from "react"
-import { apiClient } from "../api/apiClient"
+import { apiRequest } from "../api/apiClient"
 
 const registerSchema = yup.object({
     username: yup
@@ -63,7 +63,7 @@ function RegisterPage () {
         setError("")
         setCreatedUser(null)
         try {
-            const user = await apiClient("/users/add", {
+            const user = await apiRequest("/users/add", {
                 method: "POST",
                 body: {
                     username: data.username,

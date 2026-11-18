@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Alert, Card, Col, Row, Spinner } from "react-bootstrap"
 import { useDispatch, useSelector } from "react-redux"
-import { apiClient } from "../api/apiClient"
+import { apiRequest } from "../api/apiClient"
 import { logout, selectToken } from "../features/auth/authSlice"
 
 // Une ligne "libellé : valeur", affichée seulement si la valeur existe
@@ -23,7 +23,7 @@ function ProfilePage () {
 
     // Appel ajax pour récupérer toutes les informations de l'utilisateur connecté
     useEffect(() => {
-        apiClient("/auth/me", { token })
+        apiRequest("/auth/me", { token })
             .then((data) => setProfile(data))
             .catch((err) => {
                 // token expiré ou invalide : on déconnecte l'utilisateur
