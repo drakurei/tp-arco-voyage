@@ -1,0 +1,910 @@
+/* ==========================================================
+   arco-voyage : un carnet de route
+   - la page : papier à petits carreaux avec une marge rouge
+   - l'en-tête : la couverture kraft, les liens sont des intercalaires
+   - les photos : des tirages scotchés, légèrement de travers
+   - les boutons : des étiquettes Dymo et des tampons
+   - les infos pratiques : une étiquette à bagage écrite à la main
+   ========================================================== */
+
+/* Thème clair : carnet à pages blanches */
+:root {
+  --page: oklch(0.975 0.005 240);
+  --grid: oklch(0.82 0.04 240 / 0.45);
+  --margin: oklch(0.6 0.18 25 / 0.55);
+  --ink: oklch(0.27 0.045 265);
+  --ink-soft: oklch(0.45 0.035 265);
+  --stamp: oklch(0.47 0.16 305);
+  --stamp-red: oklch(0.53 0.19 27);
+
+  --cover: oklch(0.66 0.075 68);
+  --on-cover: oklch(0.22 0.035 55);
+  --tab-1: oklch(0.88 0.08 95);
+  --tab-2: oklch(0.85 0.05 215);
+  --tab-3: oklch(0.86 0.06 150);
+  --tab-4: oklch(0.85 0.06 15);
+  --on-tab: oklch(0.25 0.03 265);
+
+  --print: oklch(0.993 0.003 90);
+  --print-ink: oklch(0.3 0.04 265);
+  --fiche: oklch(0.99 0.004 90);
+  --rule: oklch(0.8 0.05 240 / 0.55);
+  --tape: oklch(0.92 0.06 95 / 0.72);
+  --kraft: oklch(0.74 0.07 70);
+  --on-kraft: oklch(0.24 0.035 55);
+  --dymo: oklch(0.27 0.045 265);
+  --on-dymo: oklch(0.97 0.005 90);
+  --shade: oklch(0.2 0.03 265 / 0.28);
+
+  --font-text: "Alegreya", Georgia, serif;
+  --font-stamp: "Big Shoulders Stencil Display", "Arial Narrow", sans-serif;
+  --font-hand: "Nanum Pen Script", "Segoe Print", cursive;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Thème sombre : carnet à pages noires, écrit au stylo gel blanc */
+:root[data-theme="dark"] {
+  --page: oklch(0.2 0.012 265);
+  --grid: oklch(0.5 0.02 265 / 0.22);
+  --margin: oklch(0.6 0.15 25 / 0.5);
+  --ink: oklch(0.93 0.012 90);
+  --ink-soft: oklch(0.78 0.015 90);
+  --stamp: oklch(0.76 0.12 305);
+  --stamp-red: oklch(0.74 0.14 28);
+
+  --cover: oklch(0.34 0.04 55);
+  --on-cover: oklch(0.93 0.02 80);
+  --tab-1: oklch(0.48 0.06 95);
+  --tab-2: oklch(0.46 0.05 215);
+  --tab-3: oklch(0.46 0.05 150);
+  --tab-4: oklch(0.47 0.06 15);
+  --on-tab: oklch(0.96 0.01 90);
+
+  --print: oklch(0.94 0.008 90);
+  --fiche: oklch(0.25 0.014 265);
+  --rule: oklch(0.55 0.03 240 / 0.35);
+  --tape: oklch(0.85 0.05 95 / 0.5);
+  --dymo: oklch(0.9 0.015 90);
+  --on-dymo: oklch(0.22 0.03 265);
+  --shade: oklch(0.05 0.01 265 / 0.6);
+}
+
+/* Bootstrap lit ces variables : on les branche sur les nôtres dans les deux thèmes */
+:root,
+:root[data-bs-theme="dark"] {
+  --bs-body-bg: var(--page);
+  --bs-body-color: var(--ink);
+  --bs-body-font-family: var(--font-text);
+  --bs-body-font-size: 1.125rem;
+  --bs-body-line-height: 1.6;
+  --bs-emphasis-color: var(--ink);
+  --bs-secondary-color: var(--ink-soft);
+  --bs-border-color: var(--rule);
+  --bs-card-bg: var(--fiche);
+}
+
+/* ---------- La page ---------- */
+body {
+  background-color: var(--page);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+}
+
+/* Marge rouge du carnet, le long du contenu */
+main > .container {
+  position: relative;
+}
+
+@media (min-width: 1200px) {
+  main > .container::before {
+    content: "";
+    position: absolute;
+    top: -3rem;
+    bottom: -3rem;
+    left: -1.5rem;
+    width: 1.5px;
+    background: var(--margin);
+    pointer-events: none;
+  }
+}
+
+a {
+  color: var(--stamp);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--stamp);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--stamp);
+  outline-offset: 3px;
+}
+
+/* ---------- Typographie ---------- */
+h1,
+h2,
+h3 {
+  font-family: var(--font-text);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+h1 {
+  font-size: clamp(2.4rem, 5vw, 3.5rem);
+}
+
+h2 {
+  font-size: clamp(1.6rem, 2.6vw, 2rem);
+}
+
+.hero-title {
+  font-size: clamp(3rem, 7.5vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+}
+
+.lead-text {
+  max-width: 34em;
+  font-size: 1.3rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.text-page {
+  max-width: 640px;
+}
+
+.detail-text {
+  max-width: 65ch;
+  font-size: 1.15rem;
+  line-height: 1.75;
+}
+
+.capital {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* Annotations écrites à la main (courtes uniquement) */
+.note,
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-hand);
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+
+.note-red,
+.eyebrow {
+  color: var(--stamp-red);
+}
+
+/* ---------- Couverture (en-tête) ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 2rem;
+  padding: 0.9rem clamp(1rem, 3vw, 2rem) 0;
+  color: var(--on-cover);
+  background-color: var(--cover);
+  /* grain du papier kraft */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+  box-shadow: 0 2px 0 var(--shade);
+}
+
+.brand {
+  padding-bottom: 0.75rem;
+  font-family: var(--font-stamp);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--on-cover);
+}
+
+.brand:hover {
+  color: var(--on-cover);
+  text-decoration: none;
+}
+
+.main-nav {
+  flex: 1;
+}
+
+/* Intercalaires : chaque onglet a sa couleur, l'onglet actif rejoint la page */
+.nav-tabs-row {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.nav-tabs-row a {
+  display: block;
+  padding: 0.55rem 1.15rem 0.5rem;
+  border-radius: 10px 10px 0 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--on-tab);
+  text-decoration: none;
+  white-space: nowrap;
+  transform: translateY(4px);
+  box-shadow: inset 0 -8px 8px -8px var(--shade);
+  transition: transform 0.25s var(--ease);
+}
+
+.nav-tabs-row a:nth-child(1) { background: var(--tab-1); }
+.nav-tabs-row a:nth-child(2) { background: var(--tab-2); }
+.nav-tabs-row a:nth-child(3) { background: var(--tab-3); }
+.nav-tabs-row a:nth-child(4) { background: var(--tab-4); }
+
+.nav-tabs-row a:hover {
+  color: var(--on-tab);
+  transform: translateY(0);
+}
+
+.nav-tabs-row a.active {
+  background: var(--page);
+  color: var(--ink);
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+/* Bouton principal du compte : étiquette Dymo */
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  border-radius: 3px;
+  background: var(--dymo);
+  color: var(--on-dymo);
+  font-family: var(--font-stamp);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: inset 0 -2px 0 var(--shade);
+}
+
+.account-link:hover {
+  color: var(--on-dymo);
+  text-decoration: none;
+}
+
+.account-link.active {
+  background: var(--stamp-red);
+  color: var(--on-dymo);
+}
+
+/* Liens secondaires : simplement écrits sur la couverture */
+.account-secondary,
+.account-secondary.active {
+  padding: 0.4rem 0.3rem;
+  background: transparent;
+  color: var(--on-cover);
+  font-family: var(--font-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.account-secondary:hover {
+  color: var(--on-cover);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.account-secondary.active {
+  text-decoration-thickness: 3px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on-cover);
+  cursor: pointer;
+}
+
+.site-header :focus-visible {
+  outline-color: var(--on-cover);
+}
+
+@media (max-width: 991px) {
+  .site-header {
+    position: static;
+    justify-content: space-between;
+  }
+
+  .main-nav {
+    order: 3;
+    flex-basis: 100%;
+    overflow-x: auto;
+  }
+
+  .brand {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .nav-tabs-row a {
+    padding: 0.5rem 0.8rem 0.45rem;
+    font-size: 0.98rem;
+  }
+}
+
+/* ---------- Boutons : Dymo et tampons ---------- */
+.btn {
+  border-radius: 3px;
+  font-family: var(--font-stamp);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.btn-lg {
+  padding: 0.7rem 1.5rem;
+  font-size: 1.2rem;
+}
+
+.btn-primary {
+  --bs-btn-color: var(--on-dymo);
+  --bs-btn-bg: var(--dymo);
+  --bs-btn-border-color: var(--dymo);
+  --bs-btn-hover-color: var(--on-dymo);
+  --bs-btn-hover-bg: var(--stamp);
+  --bs-btn-hover-border-color: var(--stamp);
+  --bs-btn-active-color: var(--on-dymo);
+  --bs-btn-active-bg: var(--stamp);
+  --bs-btn-active-border-color: var(--stamp);
+  --bs-btn-disabled-bg: var(--dymo);
+  --bs-btn-disabled-border-color: var(--dymo);
+  box-shadow: inset 0 -2px 0 var(--shade);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--stamp);
+  --bs-btn-border-color: var(--stamp);
+  --bs-btn-hover-color: var(--page);
+  --bs-btn-hover-bg: var(--stamp);
+  --bs-btn-hover-border-color: var(--stamp);
+  --bs-btn-active-color: var(--page);
+  --bs-btn-active-bg: var(--stamp);
+  --bs-btn-active-border-color: var(--stamp);
+  --bs-btn-disabled-color: var(--stamp);
+  --bs-btn-disabled-border-color: var(--stamp);
+  border-width: 2px;
+}
+
+.btn-link {
+  --bs-btn-color: var(--stamp);
+  --bs-btn-hover-color: var(--stamp);
+  font-family: var(--font-text);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.badge {
+  border-radius: 3px;
+  font-family: var(--font-stamp);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Tirages photo scotchés ---------- */
+.print {
+  position: relative;
+  margin: 0;
+  padding: 12px 12px 14px;
+  background: var(--print);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 14px 26px -12px var(--shade);
+}
+
+.print img {
+  display: block;
+  width: 100%;
+}
+
+.print figcaption {
+  margin: 0.7rem 0 0;
+  color: var(--print-ink);
+  transform: none;
+}
+
+/* Morceau de ruban adhésif */
+.print::before,
+.destination-card::before,
+.detail-infos::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -13px;
+  left: 50%;
+  width: 96px;
+  height: 26px;
+  background: var(--tape);
+  transform: translateX(-50%) rotate(-3deg);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
+}
+
+/* ---------- Accueil ---------- */
+.hero-collage {
+  position: relative;
+  max-width: 500px;
+  margin-left: auto;
+  padding: 1rem 0 2rem 2rem;
+}
+
+.print-hero {
+  transform: rotate(2.2deg);
+}
+
+.print-hero img {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.print-hero figcaption {
+  font-size: 1.9rem;
+}
+
+/* Tampon de passeport posé sur la photo */
+.stamp {
+  display: block;
+  color: var(--stamp);
+}
+
+.stamp-hero {
+  position: absolute;
+  z-index: 3;
+  left: -0.75rem;
+  bottom: 5.5rem;
+  width: clamp(120px, 13vw, 156px);
+  transform: rotate(-14deg);
+  mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .stamp-hero {
+  mix-blend-mode: normal;
+  color: oklch(0.47 0.16 305);
+}
+
+.stamp-ring {
+  font-family: var(--font-stamp);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2.4px;
+}
+
+.stamp-big {
+  font-family: var(--font-stamp);
+  font-size: 44px;
+  font-weight: 800;
+}
+
+.stamp-small {
+  font-family: var(--font-stamp);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+@media (max-width: 991px) {
+  .hero-collage {
+    margin: 0 auto;
+    padding-left: 1.5rem;
+  }
+}
+
+/* ---------- Destinations : tirages collés sur la page ---------- */
+.destination-card {
+  --tilt: -1.2deg;
+  --tape-x: 50%;
+  position: relative;
+  padding: 12px 12px 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--print);
+  color: var(--print-ink);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 14px 26px -12px var(--shade);
+  transform: rotate(var(--tilt));
+  transition: transform 0.35s var(--ease);
+}
+
+.destination-card::before {
+  left: var(--tape-x);
+}
+
+.row > :nth-child(3n + 2) > .destination-card {
+  --tilt: 1deg;
+  --tape-x: 30%;
+}
+
+.row > :nth-child(3n) > .destination-card {
+  --tilt: -0.4deg;
+  --tape-x: 68%;
+}
+
+.row > :nth-child(4n) > .destination-card {
+  --tilt: 1.6deg;
+}
+
+/* On redresse la photo quand on s'y intéresse */
+.destination-card:hover,
+.destination-card:focus-within {
+  transform: rotate(0deg) translateY(-4px);
+}
+
+.destination-card .card-img-top {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.destination-card .card-body {
+  padding: 1rem 0.35rem 1.25rem;
+}
+
+.destination-card h2,
+.destination-card .card-title {
+  font-size: 1.75rem;
+  color: var(--print-ink);
+}
+
+.destination-card .card-text {
+  color: var(--print-ink);
+}
+
+.destination-card .capital {
+  color: oklch(0.45 0.035 265);
+}
+
+.destination-card .eyebrow {
+  color: oklch(0.53 0.19 27);
+}
+
+.destination-card .btn-outline-primary {
+  --bs-btn-color: oklch(0.47 0.16 305);
+  --bs-btn-border-color: oklch(0.47 0.16 305);
+  --bs-btn-hover-color: var(--print);
+  --bs-btn-hover-bg: oklch(0.47 0.16 305);
+  --bs-btn-hover-border-color: oklch(0.47 0.16 305);
+}
+
+.destination-card .btn-link {
+  --bs-btn-color: oklch(0.47 0.16 305);
+  --bs-btn-hover-color: oklch(0.47 0.16 305);
+}
+
+/* ---------- Page détails ---------- */
+.detail-print {
+  transform: rotate(-1.2deg);
+}
+
+.detail-image {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* Étiquette à bagage : capitale et région remplies à la main */
+.detail-infos {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.75rem 1rem 3.25rem;
+  background: var(--kraft);
+  color: var(--on-kraft);
+  clip-path: polygon(22px 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px), 0 22px);
+  transform: rotate(-1deg);
+}
+
+/* l'oeillet de l'étiquette */
+.detail-infos::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--page);
+  box-shadow: 0 0 0 3px oklch(0.6 0.06 70);
+}
+
+.detail-infos::after {
+  display: none;
+}
+
+.detail-infos dt {
+  font-family: var(--font-stamp);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--on-kraft);
+}
+
+.detail-infos dd {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.detail-infos dd a {
+  color: var(--on-kraft);
+}
+
+/* Galerie : petits tirages */
+.gallery-item {
+  margin: 0;
+  padding: 6px 6px 8px;
+  background: var(--print);
+  box-shadow: 0 8px 18px -10px var(--shade);
+  transform: rotate(-1.4deg);
+}
+
+.row > :nth-child(even) > .gallery-item {
+  transform: rotate(1.2deg);
+}
+
+.gallery-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.gallery-item figcaption {
+  margin-top: 0.4rem;
+  font-family: var(--font-hand);
+  font-size: 1.15rem;
+  line-height: 1.05;
+  color: var(--print-ink);
+}
+
+/* Favoris */
+.favorite-box {
+  margin-top: 1.5rem;
+}
+
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.favorite-hint {
+  margin: 0.6rem 0 0;
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- Fiches bristol : formulaires ---------- */
+.card {
+  --bs-card-bg: var(--fiche);
+  --bs-card-color: var(--ink);
+}
+
+.auth-card,
+.search-form {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  padding: 1.25rem;
+  background-color: var(--fiche);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 35px, var(--rule) 35px 36px);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 16px 30px -16px var(--shade);
+}
+
+/* la ligne rouge d'en-tête de la fiche, sous le titre */
+.auth-card h1 {
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid var(--stamp-red);
+}
+
+.form-label {
+  font-weight: 700;
+}
+
+.form-control,
+.form-select {
+  padding: 0.4rem 0.15rem;
+  border: 0;
+  border-bottom: 1.5px solid var(--ink-soft);
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.form-select {
+  padding-right: 2rem;
+  background-color: var(--fiche);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--stamp);
+  background-color: transparent;
+  color: var(--ink);
+  box-shadow: 0 1.5px 0 var(--stamp);
+}
+
+.form-control::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
+/* aligne le bouton avec les champs (hauteur du label) */
+@media (min-width: 768px) {
+  .search-submit {
+    padding-top: 2.1rem;
+  }
+}
+
+/* Recherche rapide : une ligne d'écriture et un tampon loupe */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.quick-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(360px, 100%);
+  border-bottom: 1.5px solid var(--ink-soft);
+}
+
+.quick-search:focus-within {
+  border-color: var(--stamp);
+}
+
+.quick-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.15rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.quick-search input::placeholder {
+  color: var(--ink-soft);
+}
+
+.quick-search button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  border: 2px solid var(--stamp);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--stamp);
+}
+
+.quick-search button:hover {
+  background: var(--stamp);
+  color: var(--page);
+}
+
+/* ---------- Profil ---------- */
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.profile-avatar {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border: 6px solid var(--print);
+  background: var(--print);
+  box-shadow: 0 8px 18px -8px var(--shade);
+  transform: rotate(-3deg);
+}
+
+.profile-section {
+  padding-bottom: 0.5rem;
+  border-bottom: 1.5px dashed var(--ink-soft);
+  font-size: 1.3rem;
+}
+
+.profile-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+}
+
+.profile-list dt {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.profile-list dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* ---------- Pied de page : ligne de découpe ---------- */
+.site-footer {
+  margin-top: 2.5rem;
+  padding: 1.25rem 0 1.75rem;
+  border-top: 1.5px dashed var(--ink-soft);
+  font-family: var(--font-hand);
+  font-size: 1.6rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- Accessibilité : pas d'animation si l'utilisateur le demande ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .nav-tabs-row a,
+  .destination-card {
+    transition: none;
+  }
+}
