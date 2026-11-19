@@ -23,6 +23,7 @@
   --tab-2: oklch(0.85 0.05 215);
   --tab-3: oklch(0.86 0.06 150);
   --tab-4: oklch(0.85 0.06 15);
+  --tab-5: oklch(0.85 0.05 300);
   --on-tab: oklch(0.25 0.03 265);
 
   --print: oklch(0.993 0.003 90);
@@ -58,6 +59,7 @@
   --tab-2: oklch(0.46 0.05 215);
   --tab-3: oklch(0.46 0.05 150);
   --tab-4: oklch(0.47 0.06 15);
+  --tab-5: oklch(0.46 0.05 300);
   --on-tab: oklch(0.96 0.01 90);
 
   --print: oklch(0.94 0.008 90);
@@ -254,6 +256,7 @@ h2 {
 .nav-tabs-row a:nth-child(2) { background: var(--tab-2); }
 .nav-tabs-row a:nth-child(3) { background: var(--tab-3); }
 .nav-tabs-row a:nth-child(4) { background: var(--tab-4); }
+.nav-tabs-row a:nth-child(5) { background: var(--tab-5); }
 
 .nav-tabs-row a:hover {
   color: var(--on-tab);
@@ -348,7 +351,7 @@ h2 {
   outline-color: var(--on-cover);
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1199px) {
   .site-header {
     position: static;
     justify-content: space-between;
@@ -358,6 +361,8 @@ h2 {
     order: 3;
     flex-basis: 100%;
     overflow-x: auto;
+    /* les onglets descendent de 4px : sans ça, une barre de défilement verticale apparaît */
+    overflow-y: hidden;
   }
 
   .brand {
@@ -785,6 +790,27 @@ h2 {
   box-shadow: 0 1.5px 0 var(--stamp);
 }
 
+/* La liste ouverte est dessinée par le système : sans fond explicite,
+   elle passe au noir brut en thème sombre. On garde la fiche et l'encre. */
+.form-select:focus {
+  background-color: var(--fiche);
+}
+
+.form-select option {
+  background-color: var(--fiche);
+  color: var(--ink);
+  font-family: inherit;
+}
+
+.form-select option:checked {
+  background-color: var(--stamp);
+  color: var(--fiche);
+}
+
+.form-select option[value=""] {
+  color: var(--ink-soft);
+}
+
 .form-control::placeholder {
   color: var(--ink-soft);
   opacity: 0.8;
@@ -1191,5 +1217,865 @@ h2 {
   .avatar-bubble,
   .profile-favorite {
     transition: none;
+  }
+}
+
+/* ==========================================================
+   Ajouts : API, profil, administration, commentaires, carte
+   ========================================================== */
+
+:root {
+  /* surligneur jaune, pour l'élément actif d'un index */
+  --highlight: oklch(0.9 0.13 98 / 0.75);
+  --danger: oklch(0.53 0.19 27);
+  --on-danger: oklch(0.98 0.005 90);
+}
+
+:root[data-theme="dark"] {
+  --highlight: oklch(0.55 0.11 98 / 0.55);
+  --danger: oklch(0.7 0.15 28);
+  --on-danger: oklch(0.2 0.02 265);
+}
+
+/* Bouton destructeur : tampon rouge */
+.btn-danger {
+  --bs-btn-color: var(--on-danger);
+  --bs-btn-bg: var(--danger);
+  --bs-btn-border-color: var(--danger);
+  --bs-btn-hover-color: var(--on-danger);
+  --bs-btn-hover-bg: var(--stamp);
+  --bs-btn-hover-border-color: var(--stamp);
+  --bs-btn-active-color: var(--on-danger);
+  --bs-btn-active-bg: var(--danger);
+  --bs-btn-disabled-color: var(--on-danger);
+  --bs-btn-disabled-bg: var(--danger);
+  --bs-btn-disabled-border-color: var(--danger);
+  box-shadow: inset 0 -2px 0 var(--shade);
+}
+
+.btn-link.link-danger {
+  --bs-btn-color: var(--danger);
+  --bs-btn-hover-color: var(--danger);
+  color: var(--danger) !important;
+}
+
+/* Placeholders de chargement : des lignes au crayon */
+.loading-lines .placeholder {
+  background-color: var(--ink-soft);
+  opacity: 0.25;
+}
+
+/* ---------- Fenêtres : une fiche bristol posée sur la page ---------- */
+.modal-backdrop.show {
+  opacity: 0.45;
+}
+
+.fiche-modal {
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  background-color: var(--fiche);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 35px, var(--rule) 35px 36px);
+  background-position: 0 14px;
+  box-shadow: 0 30px 60px -20px var(--shade);
+}
+
+.fiche-modal .modal-header {
+  margin: 0 1rem;
+  padding: 1rem 0 0.6rem;
+  border-bottom: 2px solid var(--stamp-red);
+}
+
+.fiche-modal .modal-title {
+  font-size: 1.6rem;
+}
+
+.fiche-modal .modal-footer {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.quote-preview {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--page);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* ---------- Étiquettes de régions (page Destinations) ---------- */
+.region-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.region-labels a {
+  padding: 0.2rem 0.65rem;
+  border: 1.5px dashed var(--ink-soft);
+  border-radius: 3px;
+  font-family: var(--font-hand);
+  font-size: 1.45rem;
+  line-height: 1.1;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.region-labels a:nth-child(odd) {
+  transform: rotate(-1.5deg);
+}
+
+.region-labels a:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.region-labels a:hover {
+  border-color: var(--stamp);
+  border-style: solid;
+  color: var(--stamp);
+  transform: rotate(0deg);
+}
+
+/* ---------- Carte : un extrait de carte routière collé dans le carnet ---------- */
+.map-print {
+  position: relative;
+  margin: 0;
+  padding: 10px 10px 12px;
+  background: var(--print);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 14px 26px -12px var(--shade);
+  transform: rotate(0.8deg);
+}
+
+.map-print::before {
+  content: "";
+  position: absolute;
+  z-index: 500;
+  top: -12px;
+  left: 18%;
+  width: 84px;
+  height: 24px;
+  background: var(--tape);
+  transform: rotate(-4deg);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
+}
+
+.destination-map {
+  height: 340px;
+  width: 100%;
+  background: var(--page);
+}
+
+/* tuiles un peu jaunies, comme une carte imprimée */
+.destination-map .leaflet-tile-pane {
+  filter: sepia(0.25) saturate(0.85);
+}
+
+[data-theme="dark"] .destination-map .leaflet-tile-pane {
+  filter: invert(0.88) hue-rotate(180deg) saturate(0.5) brightness(0.95);
+}
+
+.map-print figcaption {
+  margin: 0.5rem 0 0;
+  color: var(--print-ink);
+  transform: none;
+  font-size: 1.4rem;
+}
+
+.leaflet-tooltip.map-label {
+  padding: 0.1rem 0.5rem;
+  border: 0;
+  border-radius: 2px;
+  background: var(--print);
+  color: oklch(0.53 0.19 27);
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  box-shadow: 0 4px 10px -4px var(--shade);
+}
+
+.leaflet-tooltip.map-label::before {
+  display: none;
+}
+
+.leaflet-container {
+  font-family: var(--font-text);
+}
+
+/* ---------- Note sur 5 : trous de poinçonneuse ---------- */
+.punch {
+  display: inline-flex;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.punch-hole {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 50%;
+}
+
+/* trou poinçonné : on voit l'encre du tampon à travers */
+.punch-hole.is-punched {
+  border-color: var(--stamp);
+  background: var(--stamp);
+}
+
+.punch-input {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.punch-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.punch-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1.5px dashed var(--ink-soft);
+  border-radius: 50%;
+  font-family: var(--font-stamp);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.punch-option:hover {
+  border-style: solid;
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+.punch-option.is-punched {
+  border-style: solid;
+  border-color: var(--stamp);
+  background: var(--stamp);
+  color: var(--page);
+}
+
+.punch-option:focus-within {
+  outline: 3px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+/* ---------- Commentaires ---------- */
+.comments {
+  max-width: 68ch;
+}
+
+.comment-form {
+  padding: 1.25rem;
+  background-color: var(--fiche);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 35px, var(--rule) 35px 36px);
+  box-shadow:
+    0 1px 1px var(--shade),
+    0 16px 30px -16px var(--shade);
+}
+
+.comment-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1.5px dashed var(--rule);
+}
+
+.comment:first-child {
+  padding-top: 0;
+}
+
+.comment-avatar {
+  flex-shrink: 0;
+  padding: 3px;
+  background: var(--print);
+  box-shadow: 0 4px 10px -6px var(--shade);
+  transform: rotate(-3deg);
+}
+
+.comment:nth-child(even) .comment-avatar {
+  transform: rotate(2deg);
+}
+
+.comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.9rem;
+}
+
+.comment-head .capital {
+  font-size: 0.95rem;
+}
+
+.comment-text {
+  margin: 0.35rem 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Profil : marque-pages des sous-pages ---------- */
+.bookmarks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: -1rem 0 2.5rem;
+  border-bottom: 1.5px solid var(--ink-soft);
+}
+
+.bookmarks a {
+  margin-bottom: -1.5px;
+  padding: 0.45rem 1rem 0.35rem;
+  border: 1.5px solid transparent;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.bookmarks a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.bookmarks a.active {
+  border-color: var(--ink-soft);
+  background: var(--page);
+  color: var(--ink);
+}
+
+/* Favoris : une planche de tirages */
+.favorite-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2.5rem 1.75rem;
+  margin: 0;
+  padding: 1rem 0 0;
+  list-style: none;
+}
+
+.favorite-print {
+  transform: rotate(-1.4deg);
+}
+
+.favorite-board li:nth-child(3n + 2) .favorite-print {
+  transform: rotate(1.1deg);
+}
+
+.favorite-board li:nth-child(3n) .favorite-print {
+  transform: rotate(-0.5deg);
+}
+
+.favorite-print img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.favorite-print figcaption {
+  display: flex;
+  flex-direction: column;
+}
+
+.favorite-print figcaption strong {
+  font-size: 1.3rem;
+}
+
+.favorite-print figcaption .capital {
+  color: oklch(0.45 0.035 265);
+}
+
+.favorite-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+/* ---------- Administration : un registre ---------- */
+.ledger {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.ledger-index {
+  position: sticky;
+  top: 6.5rem;
+}
+
+.ledger-title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-stamp);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp-red);
+}
+
+.ledger-index ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ledger;
+}
+
+.ledger-index li {
+  counter-increment: ledger;
+}
+
+.ledger-index a {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.35rem 0.25rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ledger-index a::before {
+  content: counter(ledger, upper-roman) ".";
+  min-width: 1.9rem;
+  font-family: var(--font-stamp);
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.ledger-index a:hover {
+  text-decoration: underline;
+}
+
+/* rubrique ouverte : un coup de surligneur */
+.ledger-index a.active {
+  font-weight: 700;
+  background: linear-gradient(to top, var(--highlight) 0 55%, transparent 55%);
+}
+
+@media (max-width: 991px) {
+  .ledger {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .ledger-index {
+    position: static;
+  }
+
+  .ledger-index ol {
+    display: flex;
+    gap: 0.25rem 1rem;
+    overflow-x: auto;
+  }
+
+  .ledger-index a {
+    white-space: nowrap;
+    border-bottom: 0;
+  }
+}
+
+/* Sommaire : table des matières avec points de conduite */
+.toc {
+  max-width: 560px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toc a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  font-size: 1.3rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.toc-leader {
+  flex: 1;
+  border-bottom: 2px dotted var(--ink-soft);
+  transform: translateY(-0.3em);
+}
+
+.toc-value {
+  font-family: var(--font-stamp);
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--stamp);
+}
+
+.toc a:hover .toc-label {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Tableaux de l'administration */
+.admin-person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-person img {
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--print);
+}
+
+.admin-person .admin-thumb {
+  border-radius: 0;
+  object-fit: cover;
+  padding: 2px;
+  box-shadow: 0 2px 6px -3px var(--shade);
+}
+
+.admin-table td {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.role-chip {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 3px;
+  font-family: var(--font-stamp);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.role-chip-admin {
+  border-color: var(--stamp-red);
+  color: var(--stamp-red);
+}
+
+/* Photo introuvable : l'emplacement reste sur la page, hachuré au crayon */
+.photo-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1.5px dashed oklch(0.45 0.035 265 / 0.6);
+  background: repeating-linear-gradient(-45deg, transparent 0 9px, oklch(0.45 0.035 265 / 0.12) 9px 10px);
+  color: oklch(0.45 0.035 265);
+  text-align: center;
+}
+
+.photo-missing-note {
+  font-family: var(--font-stamp);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.photo-missing-label {
+  font-family: var(--font-hand);
+  font-size: 1.8rem;
+  line-height: 1;
+  color: oklch(0.3 0.04 265);
+}
+
+.admin-thumb.photo-missing {
+  width: 48px;
+  height: 36px;
+  padding: 0;
+}
+
+.admin-thumb.photo-missing span {
+  display: none;
+}
+
+/* ---------- Cartes de destination : cœur et note ---------- */
+.card-photo {
+  position: relative;
+}
+
+/* le cœur est un petit œillet de carton punaisé dans le coin de la photo */
+.card-heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--print);
+  color: oklch(0.47 0.16 305);
+  box-shadow: 0 3px 8px -3px oklch(0.2 0.03 265 / 0.5);
+  transition: transform 0.2s var(--ease);
+}
+
+.card-heart:hover {
+  transform: scale(1.08);
+}
+
+.card-heart.is-on {
+  color: oklch(0.53 0.19 27);
+}
+
+.card-heart:disabled {
+  opacity: 0.6;
+}
+
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: oklch(0.45 0.035 265);
+}
+
+.card-rating .punch-hole {
+  border-color: oklch(0.45 0.035 265);
+}
+
+.card-rating .punch-hole.is-punched {
+  border-color: oklch(0.47 0.16 305);
+  background: oklch(0.47 0.16 305);
+}
+
+/* ---------- Choix de la vue : deux languettes ---------- */
+.view-switch {
+  display: inline-flex;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 3px;
+}
+
+.view-switch button {
+  padding: 0.3rem 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-stamp);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.view-switch button + button {
+  border-left: 1.5px solid var(--ink-soft);
+}
+
+.view-switch button[aria-pressed="true"] {
+  background: var(--dymo);
+  color: var(--on-dymo);
+}
+
+.world-map-print {
+  transform: rotate(-0.4deg);
+}
+
+.world-map {
+  height: min(560px, 70vh);
+}
+
+/* ---------- Tableaux admin : filtre et tri ---------- */
+.table-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.table-filter input {
+  width: min(340px, 100%);
+  padding: 0.4rem 0.15rem;
+  border: 0;
+  border-bottom: 1.5px solid var(--ink-soft);
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.table-filter input:focus {
+  outline: 0;
+  border-color: var(--stamp);
+  box-shadow: 0 1.5px 0 var(--stamp);
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+}
+
+.sort-btn:hover {
+  color: var(--ink);
+}
+
+.sort-btn.is-active {
+  color: var(--stamp);
+}
+
+.sort-arrow {
+  font-family: var(--font-text);
+  font-size: 0.9em;
+  opacity: 0.55;
+}
+
+.sort-btn.is-active .sort-arrow {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-heart {
+    transition: none;
+  }
+}
+
+/* Aperçu de la photo d'une nouvelle destination */
+.new-dest-preview {
+  max-width: 220px;
+  transform: rotate(1.5deg);
+}
+
+.new-dest-preview img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .region-labels a,
+  .punch-option {
+    transition: none;
+  }
+}
+
+/* ---------- Voyageurs : registre et page publique ---------- */
+.traveler-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0 2.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.traveler-row {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: center;
+  gap: 0.15rem 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1.5px dashed var(--rule);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.traveler-row img {
+  grid-row: span 2;
+  padding: 3px;
+  background: var(--print);
+  box-shadow: 0 4px 10px -6px var(--shade);
+  transform: rotate(-3deg);
+  transition: transform 0.25s var(--ease);
+}
+
+.traveler-list li:nth-child(even) .traveler-row img {
+  transform: rotate(2deg);
+}
+
+.traveler-row-name {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.traveler-row-meta {
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.traveler-row:hover .traveler-row-name,
+.traveler-row:focus-visible .traveler-row-name {
+  color: var(--stamp);
+  text-decoration: underline;
+}
+
+.traveler-row:hover img {
+  transform: rotate(0deg);
+}
+
+.traveler-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--stamp-red);
+}
+
+.traveler-photo {
+  width: 150px;
+}
+
+.traveler-intro {
+  flex: 1;
+  min-width: 240px;
+}
+
+.traveler-summary {
+  max-width: 60ch;
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+}
+
+.traveler-me {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .traveler-row img {
+    transition: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .traveler-photo {
+    width: 110px;
   }
 }

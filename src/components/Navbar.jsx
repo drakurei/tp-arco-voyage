@@ -2,14 +2,14 @@ import { startTransition, useEffect, useRef } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectIsAdmin, selectUser } from "../features/auth/authSlice";
-import { useTheme } from "../context/ThemeContext";
+import { selectTheme, toggleTheme } from "../features/theme/themeSlice";
 import { avatarUrl } from "../utils/avatar";
 
 function Navbar() {
   const user = useSelector(selectUser);
   const isAdmin = useSelector(selectIsAdmin);
   const dispatch = useDispatch();
-  const { theme, toggleTheme } = useTheme();
+  const theme = useSelector(selectTheme);
   const navigate = useNavigate();
   const location = useLocation();
   const isDark = theme === "dark";
@@ -51,6 +51,7 @@ function Navbar() {
             Accueil
           </NavLink>
           <NavLink to="/destinations">Destinations</NavLink>
+          <NavLink to="/voyageurs">Voyageurs</NavLink>
           <NavLink to="/about">À propos</NavLink>
           <NavLink to="/contact">Contact</NavLink>
         </div>
@@ -61,7 +62,7 @@ function Navbar() {
         <button
           type="button"
           className="theme-toggle"
-          onClick={toggleTheme}
+          onClick={() => dispatch(toggleTheme())}
           aria-label={isDark ? "Passer au thème clair" : "Passer au thème sombre"}
           title={isDark ? "Thème clair" : "Thème sombre"}
         >
@@ -84,10 +85,10 @@ function Navbar() {
             {/* lien réservé au rôle admin */}
             {isAdmin && (
               <NavLink to="/admin" className="account-link account-secondary">
-                Administration
+                Tableau de bord
               </NavLink>
             )}
-            <NavLink to="/favorites" className="account-link account-secondary">
+            <NavLink to="/profile/favorites" className="account-link account-secondary">
               Favoris
             </NavLink>
             <button type="button" className="account-link account-secondary" onClick={handleLogout}>
@@ -95,7 +96,7 @@ function Navbar() {
             </button>
             {/* Bulle avec l'avatar choisi : mène au profil */}
             <NavLink to="/profile" className="avatar-bubble" title="Mon profil">
-              <img src={user.image || avatarUrl(user.username)} alt="" />
+              <img src={user.avatar || user.image || avatarUrl(user.username)} alt="" />
               <span className="visually-hidden">Profil de {user.firstName}</span>
             </NavLink>
           </>

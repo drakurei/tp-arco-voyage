@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Link } from "react-router-dom"
-import { Alert, Button, Col, Row, Spinner } from "react-bootstrap"
+import { Button, Col, Row } from "react-bootstrap"
 import { useDispatch, useSelector } from "react-redux"
-import { apiRequest } from "../api/apiClient"
-import { useAvatarChoice } from "../utils/avatar"
-import AvatarPicker from "../components/AvatarPicker"
-import { logout, selectToken, selectUser, updateAvatar } from "../features/auth/authSlice"
-import { selectMessages } from "../features/contact/contactSlice"
-import { useFavorites } from "../context/FavoritesContext"
-import destinations from "../data/destinations"
+import { selectUser } from "../features/auth/authSlice"
+import { selectFavorites } from "../features/favorites/favoritesSlice"
+import { changeMyPassword } from "../features/users/usersSlice"
+import { avatarUrl } from "../utils/avatar"
+import { formatLongDate } from "../utils/format"
+import ProfileEditModal from "../components/ProfileEditModal"
+import PasswordModal from "../components/PasswordModal"
+import SafeImage from "../components/SafeImage"
 
-const ROLE_LABELS = { admin: "Administrateur", moderator: "Modérateur", user: "Voyageur" }
+const ROLE_LABELS = { admin: "Administrateur", membre: "Voyageur" }
 const GENDER_LABELS = { male: "Homme", female: "Femme", other: "Autre" }
 
 // Une ligne "libellé : valeur", affichée seulement si la valeur existe
@@ -24,81 +25,34 @@ function Info({ label, value }) {
     )
 }
 
-// "1996-5-30" -> "30/05/1996"
-function formatBirthDate(value) {
-    if (!value) return null
-    const [y, m, d] = value.split("-")
-    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`
-}
-
 // Bande de lecture d'un passeport : lettres majuscules sans accent, le reste devient "<"
 function mrzText(value) {
     return (value ?? "")
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[̀-ͯ]/g, "")
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, "<")
 }
 
-function mrzLines(profile) {
-    const line1 = `P<ARC${mrzText(profile.lastName)}<<${mrzText(profile.firstName)}`
-    const birth = (profile.birthDate ?? "").split("-").map((part) => part.padStart(2, "0"))
-    const yymmdd = birth.length === 3 ? `${birth[0].slice(2)}${birth[1]}${birth[2]}` : "<<<<<<"
-    const sex = profile.gender === "male" ? "M" : profile.gender === "female" ? "F" : "<"
-    const line2 = `${mrzText(profile.username).padEnd(9, "<").slice(0, 9)}<ARC${yymmdd}${sex}${String(profile.id).padStart(6, "0")}`
+function mrzLines(user) {
+    const line1 = `P<ARC${mrzText(user.lastName)}<<${mrzText(user.firstName)}`
+    const sex = user.gender === "male" ? "M" : user.gender === "female" ? "F" : "<"
+    const since = (user.createdAt ?? "").slice(2, 10).replace(/-/g, "") || "<<<<<<"
+    const line2 = `${mrzText(user.username).padEnd(9, "<").slice(0, 9)}<ARC${since}${sex}${String(user.id ?? 0).padStart(6, "0")}`
     return [line1.padEnd(44, "<").slice(0, 44), line2.padEnd(44, "<").slice(0, 44)]
 }
 
-function formatDate(iso) {
-    return new Date(iso).toLocaleDateString("fr-FR")
-}
-
+// Page profil : les données de l'utilisateur connecté (gardées dans authSlice)
 function ProfilePage () {
-    const token = useSelector(selectToken)
-    const user = useSelector(selectUser)
-    const messages = useSelector(selectMessages)
     const dispatch = useDispatch()
-    const { favorites } = useFavorites()
-    const [profile, setProfile] = useState(null)
-    const [error, setError] = useState("")
-    const [editingAvatar, setEditingAvatar] = useState(false)
-    const avatarChoice = useAvatarChoice(user?.username)
+    const user = useSelector(selectUser)
+    const favorites = useSelector(selectFavorites)
+    const [editing, setEditing] = useState(false)
+    const [changingPassword, setChangingPassword] = useState(false)
 
-    // Appel ajax pour récupérer toutes les informations de l'utilisateur connecté
-    useEffect(() => {
-        apiRequest("/auth/me", { token })
-            .then((data) => setProfile(data))
-            .catch((err) => {
-                // token expiré ou invalide : on déconnecte l'utilisateur
-                if (err.status === 401) dispatch(logout())
-                else setError("Impossible de charger votre profil, réessayez plus tard.")
-            })
-    }, [token, dispatch])
-
-    if (error) {
-        return <Alert variant="danger">{error}</Alert>
-    }
-
-    if (!profile) {
-        return (
-            <div className="text-center py-5">
-                <Spinner animation="border" role="status" />
-                <p className="mt-3 capital">Chargement du profil…</p>
-            </div>
-        )
-    }
-
-    // L'avatar choisi sur le site passe avant l'image de l'API
-    const photo = user?.image || profile.image || avatarChoice.url
-    const role = profile.role ?? user?.role ?? "user"
-    const favoriteDestinations = destinations.filter((d) => favorites.includes(d.slug))
-    const myMessages = messages.filter((m) => m.userId === profile.id)
-    const [mrz1, mrz2] = mrzLines(profile)
-
-    const saveAvatar = () => {
-        dispatch(updateAvatar(avatarChoice.url))
-        setEditingAvatar(false)
-    }
+    const photo = user.avatar || user.image || avatarUrl(user.username)
+    const role = user.role ?? "membre"
+    const [mrz1, mrz2] = mrzLines(user)
 
     return (
         <Row className="g-5">
@@ -109,26 +63,23 @@ function ProfilePage () {
 
                     <div className="passport-body">
                         <figure className="passport-photo">
-                            <img src={photo} alt={`Avatar de ${profile.username}`} />
+                            <img src={photo} alt={`Avatar de ${user.username}`} />
                         </figure>
 
                         <div className="passport-data">
                             <h1 id="passport-name" className="passport-name">
-                                {profile.firstName} {profile.lastName}
+                                {user.firstName} {user.lastName}
                             </h1>
-                            <p className="capital mb-3">@{profile.username}</p>
+                            <p className="capital mb-3">@{user.username}</p>
                             <span className={`role-stamp role-${role}`}>{ROLE_LABELS[role] ?? role}</span>
 
                             <dl className="passport-fields">
-                                <Info label="Nom" value={profile.lastName} />
-                                <Info label="Prénom" value={profile.firstName} />
-                                <Info label="Né(e) le" value={formatBirthDate(profile.birthDate)} />
-                                <Info label="Âge" value={profile.age && `${profile.age} ans`} />
-                                <Info label="Genre" value={GENDER_LABELS[profile.gender] ?? profile.gender} />
-                                <Info label="Ville" value={profile.address?.city} />
-                                <Info label="Pays" value={profile.address?.country} />
-                                <Info label="Email" value={profile.email} />
-                                <Info label="Téléphone" value={profile.phone} />
+                                <Info label="Nom" value={user.lastName} />
+                                <Info label="Prénom" value={user.firstName} />
+                                <Info label="Genre" value={GENDER_LABELS[user.gender] ?? user.gender} />
+                                <Info label="Email" value={user.email} />
+                                <Info label="Inscrit le" value={formatLongDate(user.createdAt)} />
+                                <Info label="N° de compte" value={user.id && String(user.id).padStart(6, "0")} />
                             </dl>
                         </div>
                     </div>
@@ -140,68 +91,50 @@ function ProfilePage () {
                     </p>
                 </section>
 
-                {/* Changer d'avatar : la bulle du menu suit */}
-                {editingAvatar ? (
-                    <div className="avatar-edit">
-                        <AvatarPicker choice={avatarChoice} idPrefix="profile-avatar" label="Nouvel avatar" />
-                        <div className="d-flex flex-wrap gap-3 mt-3">
-                            <Button variant="primary" onClick={saveAvatar}>
-                                Garder cet avatar
-                            </Button>
-                            <Button variant="link" className="px-0" onClick={() => setEditingAvatar(false)}>
-                                Annuler
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <Button variant="link" className="px-0 mt-3" onClick={() => setEditingAvatar(true)}>
-                        Changer mon avatar
+                <div className="d-flex flex-wrap gap-3 mt-4">
+                    <Button variant="primary" onClick={() => setEditing(true)}>
+                        Modifier mes informations
                     </Button>
-                )}
+                    <Button variant="outline-primary" onClick={() => setChangingPassword(true)}>
+                        Changer mon mot de passe
+                    </Button>
+                    <Link to={`/voyageurs/${encodeURIComponent(user.username)}`} className="align-self-center">
+                        Voir ma page publique
+                    </Link>
+                </div>
             </Col>
 
             <Col lg={5}>
-                <section className="mb-5">
-                    <h2 className="profile-section">Mes favoris</h2>
-                    {favoriteDestinations.length === 0 ? (
+                <section>
+                    <h2 className="profile-section">Derniers favoris</h2>
+                    {favorites.length === 0 ? (
                         <p className="capital">
                             Aucune destination pour l'instant. Ajoutez-en depuis les <Link to="/destinations">destinations</Link>.
                         </p>
                     ) : (
                         <>
                             <ul className="profile-favorites">
-                                {favoriteDestinations.slice(0, 6).map((d) => (
-                                    <li key={d.slug}>
-                                        <Link to={`/destinations/${d.slug}`} className="profile-favorite">
-                                            <img src={d.image} alt="" />
-                                            <span>{d.name}</span>
-                                        </Link>
+                                {favorites.slice(0, 3).map((f) => (
+                                    <li key={f.destinationId}>
+                                        <div className="profile-favorite">
+                                            <SafeImage src={f.image} />
+                                            <span>{f.title}</span>
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
-                            <Link to="/favorites">Voir tous mes favoris ({favoriteDestinations.length})</Link>
+                            <Link to="/profile/favorites">Tous mes favoris ({favorites.length})</Link>
                         </>
                     )}
                 </section>
-
-                <section>
-                    <h2 className="profile-section">Mes demandes de contact</h2>
-                    {myMessages.length === 0 ? (
-                        <p className="capital">
-                            Aucune demande envoyée. Une question ? <Link to="/contact">Écrivez-nous</Link>.
-                        </p>
-                    ) : (
-                        <ul className="profile-messages">
-                            {myMessages.map((m) => (
-                                <li key={m.id}>
-                                    <strong>{m.subject}</strong>
-                                    <span className="capital">envoyée le {formatDate(m.sentAt)}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </section>
             </Col>
+
+            <ProfileEditModal show={editing} onHide={() => setEditing(false)} user={user} />
+            <PasswordModal
+                show={changingPassword}
+                onHide={() => setChangingPassword(false)}
+                onSubmit={(passwords) => dispatch(changeMyPassword(passwords)).unwrap()}
+            />
         </Row>
     )
 }

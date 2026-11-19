@@ -2,7 +2,7 @@ import { Button, Card, Col, Alert, Form } from "react-bootstrap"
 import { useForm } from "react-hook-form"
 import * as yup from "yup"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Link, Navigate, useNavigate } from "react-router-dom"
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom"
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { clearAuthError, loginUser, selectUser } from "../features/auth/authSlice"
@@ -19,8 +19,13 @@ const loginSchema = yup.object({
 function LoginPage () {
     const dispatch = useDispatch()
     const navigate = useNavigate()
+    // après une inscription, RegisterPage nous envoie ici avec le login créé
+    const location = useLocation()
+    const registered = location.state?.registered ?? null
     // erreur de connexion gardée dans le slice auth
     const error = useSelector((state) => state.auth.error)
+    // session expirée : message laissé par authSlice
+    const notice = useSelector((state) => state.auth.notice)
     const user = useSelector(selectUser)
 
     // En quittant la page, on efface l'erreur pour ne pas la revoir au retour
@@ -34,6 +39,8 @@ function LoginPage () {
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: yupResolver(loginSchema),
+        // le login vient d'être créé : on le pré-remplit
+        defaultValues: { username: registered ?? "", password: "" },
     })
 
     // loginUser est un thunk : unwrap() renvoie le résultat ou lève l'erreur
@@ -58,10 +65,13 @@ function LoginPage () {
                     <Card.Body>
                         <h1 className="mb-4">Connexion</h1>
 
-                        <p className="capital mb-4">
-                            Comptes de test dummyjson : <strong>emilys</strong> / <strong>emilyspass</strong> (admin)
-                            ou <strong>averyp</strong> / <strong>averyppass</strong> (utilisateur)
-                        </p>
+                        {notice && !error && <Alert variant="warning">{notice}</Alert>}
+
+                        {registered && !error && (
+                            <Alert variant="success">
+                                Compte <strong>{registered}</strong> créé. Saisissez votre mot de passe pour vous connecter.
+                            </Alert>
+                        )}
 
                         {error && <Alert variant="danger">{error}</Alert>}
 

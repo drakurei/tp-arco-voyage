@@ -1,39 +1,46 @@
 import { useEffect } from "react"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Alert, Badge, Button, Card, Col, Row, Form } from "react-bootstrap"
+import { Alert, Button, Col, Row, Form } from "react-bootstrap"
 import { useForm } from "react-hook-form"
-import { Link, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
 import * as yup from "yup"
-import { destinations } from "../data/destinations"
-
-// Liste des régions existantes, sans doublon, pour le select
-const regions = [...new Set(destinations.map((destination) => destination.region))].sort()
+import { fetchRegions, selectRegions } from "../features/destinations/destinationsSlice"
+import { clearSearch, searchDestinations } from "../features/search/searchSlice"
+import DestinationCard from "../components/DestinationCard"
+import { LoadingLines } from "../components/PageStatus"
+import { plural } from "../utils/format"
+import { useRatings } from "../features/comments/useRatings"
 
 // Création du schema de validation yup
 // https://github.com/jquense/yup
 // Permet de mettre en place des contraintes de validation sur nos formulaires
 const searchSchema = yup.object({
-  keywords: yup
+  keyword: yup
     .string() // chaine de caractère
     .trim()
     // facultatif, mais au moins 2 caractères si le champ est rempli
     .test("min-si-rempli", "La recherche doit avoir au moins 2 caractères", (value) => !value || value.length >= 2)
-    // obligatoire seulement si aucune région n'est choisie
+    // obligatoire seulement si aucune région n'est choisie (l'API répond 400 sans critère)
     .when("region", {
       is: (region) => !region,
-      then: (schema) => schema.required("Veuillez saisir une recherche ou choisir une région"),
+      then: (schema) => schema.required("Saisissez un mot-clé ou choisissez une région"),
     }),
-  region: yup
-    .string()
-    .oneOf(["", ...regions], "Région inconnue"), // facultatif
+  region: yup.string(), // facultatif : slug de la région
 })
 
 function SearchPage() {
-  // Les critères de recherche sont gardés dans l'URL : /search?keywords=...&region=...
+  const dispatch = useDispatch()
+  const regions = useSelector(selectRegions)
+  const regionsStatus = useSelector((state) => state.destinations.regionsStatus)
+  const { results, status, error } = useSelector((state) => state.search)
+  useRatings(results)
+
+  // Les critères de recherche sont gardés dans l'URL : /search?keyword=...&region=...
   const [searchParams, setSearchParams] = useSearchParams()
-  const keywords = searchParams.get("keywords") ?? ""
+  const keyword = searchParams.get("keyword") ?? ""
   const region = searchParams.get("region") ?? ""
-  const hasSearched = keywords !== "" || region !== ""
+  const hasCriteria = keyword !== "" || region !== ""
 
   const {
     register,
@@ -42,59 +49,64 @@ function SearchPage() {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(searchSchema),
-    defaultValues: { keywords, region },
+    defaultValues: { keyword, region },
   })
 
-  // Si l'URL change (ex. recherche lancée depuis le header), on remet le formulaire à jour
   useEffect(() => {
-    reset({ keywords, region })
-  }, [keywords, region, reset])
+    if (regionsStatus === "idle") dispatch(fetchRegions())
+  }, [regionsStatus, dispatch])
+
+  // Le formulaire reprend les critères de l'URL
+  // (on attend aussi les régions : sans leurs <option>, le menu ne peut pas afficher la région choisie)
+  useEffect(() => {
+    reset({ keyword, region })
+  }, [keyword, region, regions.length, reset])
+
+  // L'URL change (formulaire, recherche rapide, retour arrière) : on relance la recherche
+  useEffect(() => {
+    if (keyword || region) dispatch(searchDestinations({ keyword, region }))
+    else dispatch(clearSearch())
+  }, [keyword, region, dispatch])
 
   const onSubmit = (data) => {
     const params = {}
-    if (data.keywords) params.keywords = data.keywords
+    if (data.keyword) params.keyword = data.keyword
     if (data.region) params.region = data.region
     setSearchParams(params)
   }
 
-  const results = destinations.filter((destination) => {
-    const text = `${destination.name} ${destination.capital} ${destination.description}`.toLowerCase()
-    const matchKeywords = !keywords || text.includes(keywords.toLowerCase())
-    const matchRegion = !region || destination.region === region
-    return matchKeywords && matchRegion
-  })
+  const regionName = regions.find((r) => r.slug === region)?.name
 
   return (
     <>
       <h1 className="mb-4">Rechercher une destination</h1>
 
-      <Form noValidate onSubmit={handleSubmit(onSubmit)} className="search-form mb-5">
+      <Form noValidate onSubmit={handleSubmit(onSubmit)} className="search-form mb-5" role="search">
         <Row className="g-3 align-items-start">
           <Col md={5}>
-            <Form.Group controlId="keywords">
-              <Form.Label>Mots-clés</Form.Label>
+            <Form.Group controlId="keyword">
+              <Form.Label>Mot-clé</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Ex. : Tokyo, plage, temples…"
-                isInvalid={!!errors.keywords}
-                {...register("keywords")}
+                placeholder="Pays, capitale ou région"
+                isInvalid={!!errors.keyword}
+                {...register("keyword")}
               />
-              <Form.Control.Feedback type="invalid">{errors.keywords?.message}</Form.Control.Feedback>
+              <Form.Control.Feedback type="invalid">{errors.keyword?.message}</Form.Control.Feedback>
             </Form.Group>
           </Col>
 
           <Col md={4}>
             <Form.Group controlId="region">
               <Form.Label>Région</Form.Label>
-              <Form.Select isInvalid={!!errors.region} {...register("region")}>
+              <Form.Select {...register("region")}>
                 <option value="">Toutes les régions</option>
                 {regions.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
+                  <option key={r.slug} value={r.slug}>
+                    {r.name}
                   </option>
                 ))}
               </Form.Select>
-              <Form.Control.Feedback type="invalid">{errors.region?.message}</Form.Control.Feedback>
             </Form.Group>
           </Col>
 
@@ -106,40 +118,27 @@ function SearchPage() {
         </Row>
       </Form>
 
-      {hasSearched && (
+      {hasCriteria && (
         <>
-          {results.length === 0 ? (
-            <Alert variant="warning">Aucune destination ne correspond à votre recherche.</Alert>
-          ) : (
-            <p className="mb-3">
-              <Badge bg="secondary" className="me-2">
-                {results.length}
-              </Badge>
-              {results.length > 1 ? "destinations trouvées" : "destination trouvée"}
+          {status === "loading" && <LoadingLines lines={3} label="Recherche en cours…" />}
+          {status === "failed" && <Alert variant="danger">{error}</Alert>}
+          {status === "succeeded" && (
+            <p className="capital mb-4" aria-live="polite">
+              {results.length === 0
+                ? "Aucune destination ne correspond à votre recherche."
+                : `${plural(results.length, "destination trouvée", "destinations trouvées")}`}
+              {keyword && <> pour « {keyword} »</>}
+              {regionName && <> en {regionName}</>}
             </p>
           )}
 
           <Row xs={1} md={2} lg={3} className="g-4">
-            {results.map((destination) => (
-              <Col key={destination.id}>
-                <Card className="destination-card h-100">
-                  <Card.Img variant="top" src={destination.image} alt={destination.name} />
-                  <Card.Body className="d-flex flex-column">
-                    <p className="eyebrow mb-1">{destination.region}</p>
-                    <Card.Title as="h2">{destination.name}</Card.Title>
-                    <p className="capital">Capitale : {destination.capital}</p>
-                    <Button
-                      as={Link}
-                      to={`/destinations/${destination.slug}`}
-                      variant="outline-primary"
-                      className="mt-auto align-self-start"
-                    >
-                      Voir les détails
-                    </Button>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+            {status === "succeeded" &&
+              results.map((destination) => (
+                <Col key={destination.id}>
+                  <DestinationCard destination={destination} showText={false} />
+                </Col>
+              ))}
           </Row>
         </>
       )}

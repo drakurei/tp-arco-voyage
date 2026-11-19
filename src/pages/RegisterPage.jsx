@@ -2,8 +2,8 @@ import { Button, Card, Col, Alert, Form } from "react-bootstrap"
 import { useForm, useWatch } from "react-hook-form"
 import * as yup from "yup"
 import { yupResolver } from "@hookform/resolvers/yup"
-import { Link, Navigate } from "react-router-dom"
-import { useEffect, useState } from "react"
+import { Link, Navigate, useNavigate } from "react-router-dom"
+import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { clearAuthError, registerUser, selectUser } from "../features/auth/authSlice"
 import { useAvatarChoice } from "../utils/avatar"
@@ -46,13 +46,11 @@ function RegisterPage () {
     // erreur d'inscription gardée dans le slice auth
     const error = useSelector((state) => state.auth.error)
     const user = useSelector(selectUser)
-    const [createdUser, setCreatedUser] = useState(null)
-
+    const navigate = useNavigate()
 
     const {
         register,
         handleSubmit,
-        reset,
         control,
         setError,
         formState: { errors, isSubmitting },
@@ -80,21 +78,20 @@ function RegisterPage () {
 
     // registerUser est un thunk : unwrap() renvoie le résultat ou lève l'erreur
     const onSubmit = async (data) => {
-        setCreatedUser(null)
         try {
-            const user = await dispatch(registerUser({ ...data, avatar })).unwrap()
-            setCreatedUser(user)
-            reset()
-            avatarChoice.reset()
+            // gender est facultatif : on ne l'envoie pas s'il est vide
+            const { gender, ...fields } = data
+            await dispatch(registerUser({ ...fields, ...(gender ? { gender } : {}), avatar })).unwrap()
+            // compte créé : direction la page de connexion, avec le login pour le pré-remplir
+            navigate("/login", { state: { registered: data.username } })
         } catch (message) {
             // unwrap() renvoie le message passé à rejectWithValue
-            // login ou email déjà pris : on affiche l'erreur sous le champ login
+            // login ou email déjà pris : on affiche l'erreur sous le champ concerné
             const text = String(message).toLowerCase()
-            if (text.includes("username") || text.includes("email")) {
-                setError("username", {
-                    type: "server",
-                    message: "Ce login ou cet email est déjà utilisé",
-                })
+            if (text.includes("email")) {
+                setError("email", { type: "server", message: "Cet email est déjà utilisé" })
+            } else if (text.includes("username") || text.includes("utilisateur") || text.includes("login")) {
+                setError("username", { type: "server", message: "Ce login est déjà utilisé" })
             }
         }
     }
@@ -111,17 +108,6 @@ function RegisterPage () {
                     <h1 className="mb-4">Inscription</h1>
 
                     {error && <Alert variant="danger">{error}</Alert>}
-
-                    {createdUser && (
-                        <Alert variant="success" className="register-success">
-                            <img src={createdUser.image} alt="" className="register-success-avatar" />
-                            <span>
-                                Merci {createdUser.firstName}, votre inscription a été envoyée (utilisateur n°{createdUser.id}).
-                                dummyjson simule l'ajout sans l'enregistrer : pour vous connecter, utilisez
-                                le compte de test indiqué sur la <Link to="/login">page de connexion</Link>.
-                            </span>
-                        </Alert>
-                    )}
 
                     <Form noValidate onSubmit={handleSubmit(onSubmit)}>
                         {/* Avatar DiceBear, généré à partir du login */}
